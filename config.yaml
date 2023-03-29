@@ -1,0 +1,5 @@
+mqtt-server:
+  ip: w1f3de21-internet-facing-d20ff3271ba3b92c.elb.ap-east-1.amazonaws.com
+  port: 1883
+  username: heibaiyuanfen
+  password: heibaiyuanfen890

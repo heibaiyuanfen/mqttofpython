@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "../mqttx/locales"
+		},
+		{
+			"path": "../mqttx/resources"
+		},
+		{
+			"path": "../mqttx/swiftshader"
+		}
+	]
+}

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0">
+    <title>myProject</title>
+    <!-- 引入 js/echarts.min.js -->
+    <script src="js/echarts.min.js"></script>
+	<script src="https://unpkg.com/mqtt@2.18.8/dist/mqtt.min.js"></script>
+	<script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+<style>
+body{
+  background:url("smart.jpg") no-repeat;
+  background-size: 100%;
+}
+.t{
+	margin-top:10%;
+}
+.div1{
+	margin-top:70px;
+	width:100%;
+	 display: flex;
+	}
+.div2{
+	margin-left:5%;
+	 display: flex;
+	}
+</style>		
+</head>
+<body>
+	<div class="t"><center><h1>水果分拣系统设计</h1></center></div>
+ 	<div class=div1>
+	<img src="apple.jpg" id="userImge" style="width: 50%;height:50%;" name="userImge" >
+	<div style="width: 50%;height:200px;">
+		<center><h3 >第<a id="num">0</a>个苹果</h3></center>
+		<center><h3>体积：中</h3></center>
+		<center><h3>成熟度：<a id="csd">85</a>%</h3></center>
+		<div class="div2">
+		<center><button id="bu" style="width: 80px;height:30px">接收图片</button></center>
+		<center><button id="but" style="width: 80px;height:30px;margin-left:5%;">ledon</button></center>
+	    </div>
+	</div>
+    </div>
+
+    
+    <div id="dev" style="width: 100%;height:300px;"></div>
+	
+
+    <script>
+	//初始化仪表盘
+	var myChart = new Array();
+	var option = new Array();
+
+
+	 myChart = echarts.init(document.getElementById('dev'));
+	
+	option = {
+    backgroundColor: '#2c343c',
+
+    title: {
+        text: '苹果数量统计',
+        left: 'center',
+        top: 20,
+        textStyle: {
+            color: '#ccc'
+        }
+    },
+
+    tooltip: {
+        trigger: 'item',
+        formatter: '{a} <br/>{b} : {c} ({d}%)'
+    },
+
+    visualMap: {
+        show: false,
+        min: 80,
+        max: 600,
+        inRange: {
+            colorLightness: [0, 1]
+        }
+    },
+    series: [
+        {
+            name: '访问来源',
+            type: 'pie',
+            radius: '55%',
+            center: ['50%', '50%'],
+            data: [
+                {value: 200, name: '大苹果'},
+                {value: 100, name: '标准苹果'},
+                {value: 100, name: '小苹果'},
+   
+            ].sort(function (a, b) { return a.value - b.value; }),
+            roseType: 'radius',
+            label: {
+                color: 'rgba(255, 255, 255, 0.3)'
+            },
+            labelLine: {
+                lineStyle: {
+                    color: 'rgba(255, 255, 255, 0.3)'
+                },
+                smooth: 0.2,
+                length: 10,
+                length2: 20
+            },
+            itemStyle: {
+                color: '#c23531',
+                shadowBlur: 200,
+                shadowColor: 'rgba(0, 0, 0, 0.5)'
+            },
+
+            animationType: 'scale',
+            animationEasing: 'elasticOut',
+            animationDelay: function (idx) {
+                return Math.random() * 200;
+            }
+        }
+    ]
+};
+//初始化mqtt信息		
+const options = {
+      // 认证信息
+      clientId: '设备id',
+      username: '用户名',
+      password: '密码',
+}
+
+const client = mqtt.connect('wss://域名:443/mqtt', options);
+client.subscribe('up');
+client.subscribe('photo');
+
+$("#bu").click(function(){
+	str1="{\"id\":\"up\"}";
+  client.publish("sw_led",str1,1);
+});
+$("#but").click(function(){
+	var st=$("#but").text();
+	console.log(st);
+	if(st=="ledon")
+	{
+		str1="{\"id\":\"on\"}";
+ 		client.publish("sw_led",str1,1);
+ 		$("#but").text("ledoff");
+	}else
+	{
+		str1="{\"id\":\"off\"}";
+ 		client.publish("sw_led",str1,1);
+ 		$("#but").text("ledon");
+	}
+	
+
+	//str1="{\"id\":\"up\"}";
+ // client.publish("sw_led",str1,1);
+});
+//myChart.setOption(option, true)
+myChart.setOption(option, true)
+//接受信息
+client.on('message', function (topic, message) {
+	var p1 = message.toString();
+ 	 //console.log(p1);
+
+	if(topic=="up")
+	{
+		var p2 = JSON.parse(p1);
+ 		console.log(p2);
+ 	$("#csd").html(p2.val);
+	 option.series[0].data[0].value = p2.val;
+	
+	 myChart.setOption(option, true)
+	}
+	else if(topic=="photo")
+	{
+		$("#userImge").attr("src","data:image/jpg;base64,"+p1);
+	}
+  
+	 
+  
+})
+client.on('reconnect', (error) => {
+    console.log('正在重连:', error)
+})
+client.on('connect', (error) => {
+    console.log('连接成功:', error)
+})
+client.on('error', (error) => {
+    console.log('连接失败:', error)
+})
+
+
+  </script>
+</body>
+</html>
